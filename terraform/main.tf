@@ -1,20 +1,28 @@
-resource "google_storage_bucket" "tollway-traffic" {
+resource "google_storage_bucket" "tollway_traffic" {
     name = "tollway-traffic"
     location = "us"
 }
 
 resource "google_cloudfunctions_function" "tollway_event" {
-    name = "tollway_event"
-    description = "Cloud Function to process Pub/Sub Topic ID - tollway"
+    name = "process-tollway-event"
+    description = "Processes tollway traffic events"
     runtime = "python39"
-    entry_point = "main"
-    timeout = "120s"
-    available_memory_mb = "256"
-    service_account_email = ""
+    available_memory_mb = 256
+    timeout = "180s"
+    source_archive_bucket = ""
     source_archive_object = ""
-    trigger {
-        pubsub = {
-            topic = "tollway"
-        }
-    }
+    entry_point = "process_streaming_data"
+    trigger_topic = "tollway"
+}
+
+resource "google_redis_instance" "tollway_cache" {
+    name = "tollway-traffic-cache"
+    tier = "STANDARD_HA"
+    memory_size_gb = 1
+    location_id = "us-central1"
+}
+
+resource "google_bigquery_dataset" "tollway_traffic" {
+    dataset_id = "tollway_traffic"
+    location = "us-central1"
 }
