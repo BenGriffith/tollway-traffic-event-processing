@@ -26,3 +26,38 @@ resource "google_bigquery_dataset" "tollway_traffic" {
     dataset_id = "tollway_traffic"
     location = "us-central1"
 }
+
+resource "google_bigquery_table" "fact_tollway_events" {
+    dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
+    table_id = "fact_tollway_events"
+    deletion_protection = false
+
+    time_partitioning {
+      type = "DAY"
+      field = "timestamp"
+    }
+
+    schema = <<EOF
+    [
+        {
+            "name": "event_id",
+            "type": "string",
+            "mode": "required"
+        },
+        {
+            "name": "vehicle_id",
+            "type": "string",
+            "mode": "required"
+        },
+        {
+            "name": "tollway_id",
+            "type": "string",
+            "mode": "required"
+        },
+        {
+            "name": "timestamp",
+            "type": "timestamp",
+            "mode": "required"
+        }
+    ]
+}
