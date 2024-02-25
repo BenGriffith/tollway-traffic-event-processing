@@ -27,9 +27,9 @@ resource "google_bigquery_dataset" "tollway_traffic" {
     location = "us-central1"
 }
 
-resource "google_bigquery_table" "fact_tollway_events" {
+resource "google_bigquery_table" "fact_tollway_event" {
     dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
-    table_id = "fact_tollway_events"
+    table_id = "fact_tollway_event"
     deletion_protection = false
 
     time_partitioning {
@@ -37,21 +37,20 @@ resource "google_bigquery_table" "fact_tollway_events" {
       field = "timestamp"
     }
 
-    schema = <<EOF
-    [
+    schema = jsonencode([
         {
             "name": "event_id",
-            "type": "string",
+            "type": "integer",
             "mode": "required"
         },
         {
             "name": "vehicle_id",
-            "type": "string",
+            "type": "integer",
             "mode": "required"
         },
         {
             "name": "tollway_id",
-            "type": "string",
+            "type": "integer",
             "mode": "required"
         },
         {
@@ -59,5 +58,154 @@ resource "google_bigquery_table" "fact_tollway_events" {
             "type": "timestamp",
             "mode": "required"
         }
-    ]
+    ])
+}
+
+resource "google_bigquery_table" "dim_tollway" {
+    dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
+    table_id = "dim_tollway"
+    deletion_protection = false
+
+    schema = jsonencode([
+        {
+            "name": "tollway_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "tollway_name",
+            "type": "string",
+            "mode": "nullable"
+        }
+    ])
+}
+
+resource "google_bigquery_table" "dim_vehicle" {
+    dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
+    table_id = "dim_vehicle"
+    deletion_protection = false
+
+    schema = jsonencode([
+        {
+            "name": "vehicle_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "make_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "model_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "category_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "state_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "color",
+            "type": "string",
+            "mode": "nullable"
+        },
+        {
+            "name": "vin",
+            "type": "string",
+            "mode": "nullable"
+        },
+        {
+            "name": "year",
+            "type": "string",
+            "mode": "nullable"
+        },
+        {
+            "name": "license_plate",
+            "type": "string",
+            "mode": "nullable"
+        }
+    ])
+}
+
+resource "google_bigquery_table" "dim_make" {
+    dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
+    table_id = "dim_make"
+    deletion_protection = false
+
+    schema = jsonencode([
+        {
+            "name": "make_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "make",
+            "type": "string",
+            "mode": "nullable"
+        }
+    ])
+}
+
+resource "google_bigquery_table" "dim_model" {
+    dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
+    table_id = "dim_model"
+    deletion_protection = false
+
+    schema = jsonencode([
+        {
+            "name": "model_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "model",
+            "type": "string",
+            "mode": "nullable"
+        }
+    ])
+}
+
+resource "google_bigquery_table" "dim_category" {
+    dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
+    table_id = "dim_category"
+    deletion_protection = false
+
+    schema = jsonencode([
+        {
+            "name": "category_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "category",
+            "type": "string",
+            "mode": "nullable"
+        }
+    ])
+}
+
+resource "google_bigquery_table" "dim_state" {
+    dataset_id = google_bigquery_dataset.tollway_traffic.dataset_id
+    table_id = "dim_state"
+    deletion_protection = false
+
+    schema = jsonencode([
+        {
+            "name": "state_id",
+            "type": "integer",
+            "mode": "required"
+        },
+        {
+            "name": "state",
+            "type": "string",
+            "mode": "nullable"
+        }
+    ])
 }
