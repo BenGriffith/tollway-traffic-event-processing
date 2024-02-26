@@ -9,8 +9,8 @@ resource "google_cloudfunctions_function" "tollway_event" {
     runtime = "python39"
     available_memory_mb = 256
     timeout = "180s"
-    source_archive_bucket = ""
-    source_archive_object = ""
+    source_archive_bucket = "tollway-traffic"
+    source_archive_object = "cloud_function/process_tollway_event.zip"
     entry_point = "process_streaming_data"
     trigger_topic = "tollway"
 }
@@ -19,7 +19,7 @@ resource "google_redis_instance" "tollway_cache" {
     name = "tollway-traffic-cache"
     tier = "STANDARD_HA"
     memory_size_gb = 1
-    location_id = "us-central1"
+    region = "us-central1"
 }
 
 resource "google_bigquery_dataset" "tollway_traffic" {
