@@ -1,18 +1,32 @@
+provider "google" {
+    project = var.project_id
+}
+
 resource "google_storage_bucket" "tollway_traffic" {
-    name = "tollway-traffic"
+    name = "tollway_traffic"
     location = "us"
+    force_destroy = true
+
+    provisioner "local-exec" {
+      command = "${path.module}/../scripts/deploy_function.sh"
+    }
 }
 
 resource "google_cloudfunctions_function" "tollway_event" {
     name = "process-tollway-event"
+    region = "us-central1"
     description = "Processes tollway traffic events"
     runtime = "python39"
-    available_memory_mb = 256
-    timeout = "180s"
-    source_archive_bucket = "tollway-traffic"
+    available_memory_mb = 128
+    timeout = 180
+    source_archive_bucket = google_storage_bucket.tollway_traffic.name
     source_archive_object = "cloud_function/process_tollway_event.zip"
-    entry_point = "process_streaming_data"
-    trigger_topic = "tollway"
+    entry_point = "process_tollway_traffic"
+
+    event_trigger {
+        event_type = "google.pubsub.topic.publish"
+        resource = "tollway"
+    }
 }
 
 resource "google_redis_instance" "tollway_cache" {
