@@ -12,6 +12,13 @@ resource "google_storage_bucket" "tollway_traffic" {
     }
 }
 
+resource "google_redis_instance" "tollway_cache" {
+    name = "tollway-traffic-cache"
+    tier = "STANDARD_HA"
+    memory_size_gb = 1
+    region = "us-central1"
+}
+
 resource "google_cloudfunctions_function" "tollway_event" {
     name = "process-tollway-event"
     region = "us-central1"
@@ -23,17 +30,15 @@ resource "google_cloudfunctions_function" "tollway_event" {
     source_archive_object = "cloud_function/process_tollway_event.zip"
     entry_point = "process_tollway_traffic"
 
+    environment_variables = {
+        REDIS_HOST = google_redis_instance.tollway_cache.host
+        REDIT_PORT = tostring(google_redis_instance.tollway_cache.port)
+    }
+
     event_trigger {
         event_type = "google.pubsub.topic.publish"
         resource = "tollway"
     }
-}
-
-resource "google_redis_instance" "tollway_cache" {
-    name = "tollway-traffic-cache"
-    tier = "STANDARD_HA"
-    memory_size_gb = 1
-    region = "us-central1"
 }
 
 resource "google_bigquery_dataset" "tollway_traffic" {
