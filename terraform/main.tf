@@ -16,12 +16,12 @@ resource "google_redis_instance" "tollway_cache" {
     name = "tollway-traffic-cache"
     tier = "STANDARD_HA"
     memory_size_gb = 1
-    region = "us-central1"
+    region = var.region
 }
 
 resource "google_cloudfunctions_function" "tollway_event" {
     name = "process-tollway-event"
-    region = "us-central1"
+    region = var.region
     description = "Processes tollway traffic events"
     runtime = "python39"
     available_memory_mb = 128
@@ -43,7 +43,7 @@ resource "google_cloudfunctions_function" "tollway_event" {
 
 resource "google_bigquery_dataset" "tollway_traffic" {
     dataset_id = "tollway_traffic"
-    location = "us-central1"
+    location = var.region
 }
 
 resource "google_bigquery_table" "fact_tollway_event" {
