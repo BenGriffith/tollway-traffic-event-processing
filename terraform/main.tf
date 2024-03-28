@@ -19,6 +19,13 @@ resource "google_redis_instance" "tollway_cache" {
     region = var.region
 }
 
+resource "google_vpc_access_connector" "serverless_connector" {
+    name = "serverless-connector"
+    region = var.region
+    network = "default"
+    ip_cidr_range = "10.8.0.0/28"
+}
+
 resource "google_cloudfunctions_function" "tollway_event" {
     name = "process-tollway-event"
     region = var.region
@@ -29,6 +36,7 @@ resource "google_cloudfunctions_function" "tollway_event" {
     source_archive_bucket = google_storage_bucket.tollway_traffic.name
     source_archive_object = "cloud_function/process_tollway_event.zip"
     entry_point = "process_tollway_traffic"
+    vpc_connector = google_vpc_access_connector.serverless_connector.name
 
     environment_variables = {
         REDIS_HOST = google_redis_instance.tollway_cache.host
