@@ -1,30 +1,57 @@
-resource "google_storage_bucket" "tollway_traffic" {
-    name = "tollway-traffic"
-    location = "us"
+provider "google" {
+    project = var.project_id
 }
 
-resource "google_cloudfunctions_function" "tollway_event" {
-    name = "process-tollway-event"
-    description = "Processes tollway traffic events"
-    runtime = "python39"
-    available_memory_mb = 256
-    timeout = "180s"
-    source_archive_bucket = "tollway-traffic"
-    source_archive_object = "cloud_function/process_tollway_event.zip"
-    entry_point = "process_streaming_data"
-    trigger_topic = "tollway"
+resource "google_storage_bucket" "tollway_traffic" {
+    name = "tollway_traffic"
+    location = "us"
+    force_destroy = true
+
+    provisioner "local-exec" {
+      command = "${path.module}/../scripts/deploy_function.sh"
+    }
 }
 
 resource "google_redis_instance" "tollway_cache" {
     name = "tollway-traffic-cache"
     tier = "STANDARD_HA"
     memory_size_gb = 1
-    region = "us-central1"
+    region = var.region
+}
+
+resource "google_vpc_access_connector" "serverless_connector" {
+    name = "serverless-connector"
+    region = var.region
+    network = "default"
+    ip_cidr_range = "10.8.0.0/28"
+}
+
+resource "google_cloudfunctions_function" "tollway_event" {
+    name = "process-tollway-event"
+    region = var.region
+    description = "Processes tollway traffic events"
+    runtime = "python39"
+    available_memory_mb = 128
+    timeout = 180
+    source_archive_bucket = google_storage_bucket.tollway_traffic.name
+    source_archive_object = "cloud_function/process_tollway_event.zip"
+    entry_point = "process_tollway_traffic"
+    vpc_connector = google_vpc_access_connector.serverless_connector.name
+
+    environment_variables = {
+        REDIS_HOST = google_redis_instance.tollway_cache.host
+        REDIT_PORT = tostring(google_redis_instance.tollway_cache.port)
+    }
+
+    event_trigger {
+        event_type = "google.pubsub.topic.publish"
+        resource = "tollway"
+    }
 }
 
 resource "google_bigquery_dataset" "tollway_traffic" {
     dataset_id = "tollway_traffic"
-    location = "us-central1"
+    location = var.region
 }
 
 resource "google_bigquery_table" "fact_tollway_event" {
