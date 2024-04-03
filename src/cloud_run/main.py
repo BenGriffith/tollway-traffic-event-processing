@@ -1,10 +1,11 @@
 from typing import NamedTuple
 import json
 import uuid
+import hashlib
 
 from google.cloud import pubsub_v1, bigquery
 
-from src.cloud_run.constants import (
+from constants import (
     PROJECT_ID,
     SUBSCRIPTION_ID,
     DATASET_ID,
@@ -28,6 +29,12 @@ class TollwayEvent(NamedTuple):
     timestamp: str
 
 
+def _hash(input_string):
+    full_hash = hashlib.sha256(input_string.encode("utf-8")).hexdigest()
+    truncated_hash = int(full_hash[:12], 16)
+    return truncated_hash
+
+
 def messages_to_bigquery(messages):
     rows_to_insert = []
 
@@ -37,7 +44,7 @@ def messages_to_bigquery(messages):
 
     fact_tollway_event_row = {
         "event_id": str(uuid.uuid4()),
-        "vehicle_id": "",
-        "tollway_id": "",
-        "timestamp": ""
+        "vehicle_id": _hash(message_data.vin),
+        "tollway_id": _hash(message_data.tollway_name),
+        "timestamp": message_data.timestamp
     }
