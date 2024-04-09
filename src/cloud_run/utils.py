@@ -16,7 +16,7 @@ class TollwayEvent(NamedTuple):
     timestamp: str
 
 
-def _hash(input_string):
+def hash_string(input_string):
     full_hash = hashlib.sha256(input_string.encode("utf-8")).hexdigest()
     truncated_hash = int(full_hash[:12], 16)
     return truncated_hash
