@@ -1,20 +1,20 @@
 import logging
 
 
-def setup_logger(enable, name="table", level=logging.INFO, log_file="table.log"):
+def setup_logger(enable=False, name="table", level=logging.INFO, log_file="table.log"):
     if enable:
-        logger = logging.getLogger(name)
-        logger.setLevel(level)
+        table_logger = logging.getLogger(name)
+        table_logger.setLevel(level)
 
-        if not logger.handlers:
+        if not table_logger.handlers:
             file_handler = logging.FileHandler(log_file)
             file_handler.setLevel(level)
 
             formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             file_handler.setFormatter(formatter)
 
-            logger.addHandler(file_handler)
+            table_logger.addHandler(file_handler)
 
-        return logger
+        return table_logger
     else:
         return logging.getLogger("null")
