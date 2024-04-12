@@ -1,6 +1,6 @@
-from constants import DATASET_ID, PROJECT_ID, TABLES
-from table_logging import table_logger
-from utils import hash_string
+from utils.table_logger import setup_logger
+from utils.constants import DATASET_ID, PROJECT_ID, TABLES
+from utils.helpers import hash_string
 
 
 def get_tollway_names(bigquery_client):
@@ -18,7 +18,7 @@ def insert_row(bigquery_client, message_data):
     tollway_names = get_tollway_names(bigquery_client)
 
     if message_data.tollway_name in tollway_names:
-        tollway_logger = table_logger.setup_logger(True)
+        tollway_logger = setup_logger(True)
         tollway_logger.info(f"{message_data.tollway_name} exists in dim_tollway")
         return
 

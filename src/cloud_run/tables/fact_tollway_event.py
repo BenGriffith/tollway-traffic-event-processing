@@ -1,9 +1,10 @@
 import uuid
 
-from constants import DATASET_ID, TABLES
 from google.api_core.exceptions import GoogleAPIError
-from table_logging import table_logger
-from utils import hash_string
+
+from utils.constants import DATASET_ID, TABLES
+from utils.helpers import hash_string
+from utils.table_logger import setup_logger
 
 
 def insert_row(bigquery_client, message_data):
@@ -17,7 +18,7 @@ def insert_row(bigquery_client, message_data):
     }
 
     table_ref = bigquery_client.dataset(DATASET_ID).table(TABLES["fact_tollway_event"])
-    tollway_logger = table_logger.setup_logger(True)
+    tollway_logger = setup_logger(True)
 
     try:
         fact_tollway_event_errors = bigquery_client.insert_rows_json(table_ref, [fact_tollway_event_row])
