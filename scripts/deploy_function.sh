@@ -2,9 +2,9 @@
 
 cd "$(dirname "$0")/.."
 
-cp requirements.txt src/process_tollway_event/
+cp requirements.txt src/cloud_function/
 
-cd src/process_tollway_event/
+cd src/cloud_function/
 
 zip -r ../../process_tollway_event.zip .
 

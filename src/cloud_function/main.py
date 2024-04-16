@@ -4,10 +4,11 @@ import os
 import json
 import redis
 
-REDIS_HOST = os.environ.get("REDIS_HOST")
+REDIS_HOST = os.environ["REDIS_HOST"]
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
+
 
 def process_tollway_traffic(event, context):
     message = base64.b64decode(event["data"]).decode("utf-8")
