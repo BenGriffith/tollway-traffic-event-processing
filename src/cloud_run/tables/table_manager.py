@@ -1,6 +1,6 @@
 from google.api_core.exceptions import GoogleAPIError
 
-from utils.constants import DATASET_ID, TABLES
+from utils.constants import PROJECT_ID, DATASET_ID, KEYS
 from utils.table_logger import setup_logger
 
 
@@ -10,19 +10,33 @@ class TableManager:
         self.bq_client = client
         self.table = table
         self.row = row
+        self.key_field = KEYS[self.table]
+        self.key_value = self.row[KEYS[self.table]]
 
-    def check_exits(self):
-        pass
+    def not_exists(self, key):
+        table = f"{PROJECT_ID}.{DATASET_ID}.{self.table}"
+        query = f"""
+            SELECT COUNT(*) AS record_count
+            FROM `{table}`
+            WHERE {self.key_field} = {key}
+        """
+        query_result = self.bq_client.query(query).result()
+        record_count = next(query_result).get("record_count", 0)
 
+        if record_count > 0:
+            return False
+        return True
+
+    @property
     def insert(self):
-        table_ref = self.bq_client.dataset(DATASET_ID).table(TABLES[self.table])
+        table_ref = self.bq_client.dataset(DATASET_ID).table(self.table)
         tollway_logger = setup_logger(True)
 
         try:
-
-            # update TABLES in constants module to assist with logging
-
-            table_insert = self.bq_client.insert_rows_json(table_ref, self.row)
-            tollway_logger.info("Successfully inserted event into BigQuery")
+            table_insert = self.bq_client.insert_rows_json(table_ref, [self.row])
+            tollway_logger.info(f"Successfully inserted {self.key_field} {self.key_value} into BigQuery")
         except (GoogleAPIError, Exception) as e:
+            tollway_logger.exception(
+                f"Encountered errors while inserting {self.key_field} {self.key_value} into BigQuery: {e}"
+            )
             raise
