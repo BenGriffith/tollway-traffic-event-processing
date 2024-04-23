@@ -12,5 +12,6 @@ def insert_row(bigquery_client, message_data):
     }
 
     table_manager = TableManager(client=bigquery_client, table=TABLES["dim_tollway"], row=dim_tollway_row)
-    if table_manager.not_exists(key=tollway_id):
+    tollway_exists = table_manager.not_exists(key=tollway_id)
+    if tollway_exists:
         table_manager.insert
