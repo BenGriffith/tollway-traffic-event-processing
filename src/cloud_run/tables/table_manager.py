@@ -13,7 +13,7 @@ class TableManager:
         self.key_field = KEYS[self.table]
         self.key_value = self.row[KEYS[self.table]]
 
-    def not_exists(self, key):
+    def not_exist(self, key):
         table = f"{PROJECT_ID}.{DATASET_ID}.{self.table}"
         query = f"""
             SELECT COUNT(*) AS record_count
