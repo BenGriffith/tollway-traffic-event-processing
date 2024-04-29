@@ -15,17 +15,10 @@ class TableManager:
 
     def not_exist(self, key):
         table = f"{PROJECT_ID}.{DATASET_ID}.{self.table}"
-        query = f"""
-            SELECT COUNT(*) AS record_count
-            FROM `{table}`
-            WHERE {self.key_field} = {key}
-        """
+        query = f"""SELECT COUNTIF({self.key_field} = {key}) AS record_count FROM `{table}`"""
         query_result = self.bq_client.query(query).result()
         record_count = next(query_result).get("record_count", 0)
-
-        if record_count > 0:
-            return False
-        return True
+        return record_count == 0
 
     def insert(self):
         table_ref = self.bq_client.dataset(DATASET_ID).table(self.table)
