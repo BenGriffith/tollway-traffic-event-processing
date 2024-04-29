@@ -27,7 +27,6 @@ class TableManager:
             return False
         return True
 
-    @property
     def insert(self):
         table_ref = self.bq_client.dataset(DATASET_ID).table(self.table)
         tollway_logger = setup_logger(True)
@@ -40,3 +39,11 @@ class TableManager:
                 f"Encountered errors while inserting {self.key_field} {self.key_value} into BigQuery: {e}"
             )
             raise
+
+    def execute(self, perform_check):
+        if perform_check:
+            not_exist = self.not_exist(self.key_value)
+            if not not_exist:
+                return
+
+        self.insert()
