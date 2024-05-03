@@ -40,13 +40,94 @@ resource "google_cloudfunctions_function" "tollway_event" {
 
     environment_variables = {
         REDIS_HOST = google_redis_instance.tollway_cache.host
-        REDIT_PORT = tostring(google_redis_instance.tollway_cache.port)
+        REDIS_PORT = tostring(google_redis_instance.tollway_cache.port)
     }
 
     event_trigger {
         event_type = "google.pubsub.topic.publish"
         resource = "tollway"
     }
+}
+
+resource "null_resource" "docker_image" {
+    triggers = {
+      always_run = "${timestamp()}"
+    }
+
+    provisioner "local-exec" {
+      command = "${path.module}/../scripts/cloud_run.sh"
+    }
+}
+
+resource "google_cloud_run_service" "tollway_service" {
+    depends_on = [ null_resource.docker_image ]
+
+    name = "tollway-service"
+    location = var.region
+
+    template {
+        spec {
+          containers {
+            image = "gcr.io/${var.project_id}/tollway-traffic:latest"
+
+            env {
+                name = "PROJECT_ID"
+                value = var.project_id
+            }
+            env {
+                name = "SUBSCRIPTION_ID"
+                value = var.subscription_id
+            }
+            env {
+                name = "DATASET_ID"
+                value = "tollway_traffic"
+            }
+            env {
+                name = "FACT_TOLLWAY_EVENT"
+                value = "fact_tollway_event"
+            }
+            env {
+                name = "DIM_TOLLWAY"
+                value = "dim_tollway"
+            }
+            env {
+                name = "DIM_VEHICLE"
+                value = "dim_vehicle"
+            }
+            env {
+                name = "DIM_MAKE"
+                value = "dim_make"
+            }
+            env {
+                name = "DIM_MODEL"
+                value = "dim_model"
+            }
+            env {
+                name = "DIM_CATEGORY"
+                value = "dim_category"
+            }
+            env {
+                name = "DIM_STATE"
+                value = "dim_state"
+            }
+            command = ["uvicorn"]
+            args = ["main:app", "--host", "0.0.0.0", "--port", "8080"]
+          }
+        }
+    }
+
+    traffic {
+      percent = 100
+      latest_revision = true
+    }
+}
+
+resource "google_cloud_run_service_iam_member" "unauth_invoker" {
+    project = var.project_id
+    location = google_cloud_run_service.tollway_service.location
+    service = google_cloud_run_service.tollway_service.name
+    role = "roles/run.invoker"
+    member = "allUsers"
 }
 
 resource "google_bigquery_dataset" "tollway_traffic" {
@@ -67,7 +148,7 @@ resource "google_bigquery_table" "fact_tollway_event" {
     schema = jsonencode([
         {
             "name": "event_id",
-            "type": "integer",
+            "type": "string",
             "mode": "required"
         },
         {
@@ -102,6 +183,11 @@ resource "google_bigquery_table" "dim_tollway" {
         {
             "name": "tollway_name",
             "type": "string",
+            "mode": "nullable"
+        },
+        {
+            "name": "state_id",
+            "type": "integer",
             "mode": "nullable"
         }
     ])
@@ -139,7 +225,7 @@ resource "google_bigquery_table" "dim_vehicle" {
             "mode": "required"
         },
         {
-            "name": "color",
+            "name": "primary_color",
             "type": "string",
             "mode": "nullable"
         },
