@@ -1,6 +1,9 @@
 import uuid
 import hashlib
 from typing import NamedTuple
+from datetime import datetime
+
+from utils.constants import TABLES
 
 
 class TollwayEvent(NamedTuple):
@@ -25,11 +28,19 @@ def hash_string(input_string):
 
 def create_rows(message_data):
 
+    timestamp = datetime.strptime(message_data.timestamp, "%Y-%m-%d %H:%M:%S.%f %z")
+
     fact_tollway_event_row = {
         "event_id": str(uuid.uuid4()),
         "vehicle_id": hash_string(message_data.vin),
         "tollway_id": hash_string(message_data.tollway_name),
-        "timestamp": message_data.timestamp,
+        "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+    dim_tollway_row = {
+        "tollway_id": hash_string(message_data.tollway_name),
+        "tollway_name": message_data.tollway_name,
+        "state_id": hash_string(message_data.state),
     }
 
     dim_vehicle_row = {
@@ -44,15 +55,9 @@ def create_rows(message_data):
         "license_plate": message_data.license_plate,
     }
 
-    dim_tollway_row = {
-        "tollway_id": hash_string(message_data.tollway_name),
-        "tollway_name": message_data.tollway_name,
-        "state_id": hash_string(message_data.state),
-    }
-
-    dim_state_row = {
-        "state_id": hash_string(message_data.state),
-        "state": message_data.state,
+    dim_make_row = {
+        "make_id": hash_string(message_data.make),
+        "make": message_data.make,
     }
 
     dim_model_row = {
@@ -65,17 +70,19 @@ def create_rows(message_data):
         "category": message_data.category,
     }
 
-    dim_make_row = {
-        "make_id": hash_string(message_data.make),
-        "make": message_data.make,
+    dim_state_row = {
+        "state_id": hash_string(message_data.state),
+        "state": message_data.state,
     }
 
-    return {
-        "fact_tollway_event": fact_tollway_event_row,
-        "dim_vehicle": dim_vehicle_row,
-        "dim_tollway": dim_tollway_row,
-        "dim_state": dim_state_row,
-        "dim_model": dim_model_row,
-        "dim_category": dim_category_row,
-        "dim_make": dim_make_row,
-    }
+    rows = [
+        fact_tollway_event_row,
+        dim_tollway_row,
+        dim_vehicle_row,
+        dim_make_row,
+        dim_model_row,
+        dim_category_row,
+        dim_state_row,
+    ]
+
+    return dict(zip(TABLES, rows))

@@ -59,15 +59,15 @@ resource "null_resource" "docker_image" {
     }
 }
 
-resource "google_cloud_run_service" "tollway_service" {
+resource "google_cloud_run_v2_service" "tollway_service" {
     depends_on = [ null_resource.docker_image ]
 
     name = "tollway-service"
     location = var.region
 
     template {
-        spec {
-          containers {
+
+        containers {
             image = "gcr.io/${var.project_id}/tollway-traffic:latest"
 
             env {
@@ -112,20 +112,19 @@ resource "google_cloud_run_service" "tollway_service" {
             }
             command = ["uvicorn"]
             args = ["main:app", "--host", "0.0.0.0", "--port", "8080"]
-          }
         }
-    }
 
-    traffic {
-      percent = 100
-      latest_revision = true
+        vpc_access {
+            connector = google_vpc_access_connector.serverless_connector.id
+            egress = "ALL_TRAFFIC"
+        }
     }
 }
 
 resource "google_cloud_run_service_iam_member" "unauth_invoker" {
     project = var.project_id
-    location = google_cloud_run_service.tollway_service.location
-    service = google_cloud_run_service.tollway_service.name
+    location = google_cloud_run_v2_service.tollway_service.location
+    service = google_cloud_run_v2_service.tollway_service.name
     role = "roles/run.invoker"
     member = "allUsers"
 }
