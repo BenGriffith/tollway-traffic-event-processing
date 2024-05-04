@@ -14,3 +14,5 @@ TABLES = [
 ]
 KEYS = "event_id tollway_id vehicle_id make_id model_id category_id state_id".split(" ")
 TABLES_KEYS = dict(zip(TABLES, KEYS))
+MAX_MESSAGES = 5
+STREAM_TIMEOUT = 300
