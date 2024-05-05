@@ -110,6 +110,10 @@ resource "google_cloud_run_v2_service" "tollway_service" {
                 name = "DIM_STATE"
                 value = "dim_state"
             }
+            resources {
+                cpu_idle = false
+            }
+
             command = ["uvicorn"]
             args = ["main:app", "--host", "0.0.0.0", "--port", "8080"]
         }
@@ -127,6 +131,17 @@ resource "google_cloud_run_service_iam_member" "unauth_invoker" {
     service = google_cloud_run_v2_service.tollway_service.name
     role = "roles/run.invoker"
     member = "allUsers"
+}
+
+resource "google_cloud_scheduler_job" "tollway_scheduler" {
+    name = "tollway-trigger-job"
+    region = var.region
+    schedule = "0 */12 * * *"
+
+    http_target {
+        uri = "${google_cloud_run_v2_service.tollway_service.uri}/trigger-processing/"
+        http_method = "POST"
+    }
 }
 
 resource "google_bigquery_dataset" "tollway_traffic" {
