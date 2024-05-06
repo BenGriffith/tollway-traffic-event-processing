@@ -1,2 +1,7 @@
 google-cloud-bigquery
 redis
+google-cloud-pubsub
+pre-commit
+google-api-core
+fastapi
+uvicorn
