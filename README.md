@@ -26,7 +26,7 @@ This project is designed to automate the ingestion, transformation, and storage 
 ## Prerequisites
 * Google Cloud account and project setup.
 * Google Cloud SDK and Terraform installed.
-* The Pub/Sub push subscription can be created manually or follow what is outlined [here](https://github.com/BenGriffith/tollway-traffic).
+* The Pub/Sub pull subscription can be created manually or follow what is outlined [here](https://github.com/BenGriffith/tollway-traffic) for the Pub/Sub component.
 
 ## Environment Variables
 * Set necessary variables in `cloud_run.sh` and `variable.tf`.
